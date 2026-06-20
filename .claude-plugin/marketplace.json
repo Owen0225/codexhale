@@ -1,0 +1,12 @@
+{
+  "name": "codexhale-local",
+  "owner": {
+    "name": "local"
+  },
+  "plugins": [
+    {
+      "name": "codexhale",
+      "source": "./plugins/codexhale"
+    }
+  ]
+}
