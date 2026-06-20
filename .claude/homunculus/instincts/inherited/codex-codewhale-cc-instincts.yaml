@@ -1,0 +1,493 @@
+# Instincts generated from https://github.com/Owen0225/codex-codewhale-cc
+# Generated: 2026-06-20T17:55:54.424Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: codex-codewhale-cc-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: feat, docs, fix, chore
+
+## Evidence
+
+- 21 commits analyzed
+- Detected conventional commit pattern
+- Examples: chore: scaffold codexhale plugin package, feat(args): add argv parser for companion subcommands
+
+---
+id: codex-codewhale-cc-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Commit Length
+
+## Action
+
+Write moderate-length commit messages (~57 characters)
+
+## Evidence
+
+- Average commit message length: 57 chars
+- Based on 21 commits
+
+---
+id: codex-codewhale-cc-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Naming Files
+
+## Action
+
+Use camelCase naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: camelCase
+
+---
+id: codex-codewhale-cc-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: codex-codewhale-cc-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: codex-codewhale-cc-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: codex-codewhale-cc-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~21x per month
+- Files: **/*.test.*
+
+---
+id: codex-codewhale-cc-workflow-add-new-library-module-with-tests
+trigger: "when doing add new library module with tests"
+confidence: 0.8
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Workflow Add New Library Module With Tests
+
+## Action
+
+Follow the add-new-library-module-with-tests workflow:
+1. Create or update a file in plugins/codexhale/scripts/lib/*.mjs implementing the feature.
+2. Create or update a corresponding test file in tests/*.test.mjs.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~6x per month
+- Files: plugins/codexhale/scripts/lib/*.mjs, tests/*.test.mjs
+
+---
+id: codex-codewhale-cc-workflow-update-or-fix-plugin-manifest
+trigger: "when doing update or fix plugin manifest"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Workflow Update Or Fix Plugin Manifest
+
+## Action
+
+Follow the update-or-fix-plugin-manifest workflow:
+1. Create or update plugins/codexhale/.claude-plugin/plugin.json with correct schema fields.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: plugins/codexhale/.claude-plugin/plugin.json
+
+---
+id: codex-codewhale-cc-workflow-update-installation-documentation
+trigger: "when doing update installation documentation"
+confidence: 0.6
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Workflow Update Installation Documentation
+
+## Action
+
+Follow the update-installation-documentation workflow:
+1. Create or update docs/INSTALL.md with new instructions or corrections.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~2x per month
+- Files: docs/INSTALL.md
+
+---
+id: codex-codewhale-cc-instinct-file-naming
+trigger: "When creating or renaming files in the codebase"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct File Naming
+
+## Action
+
+Use camelCase for file names
+
+## Evidence
+
+- Pattern in plugins/codexhale/scripts/lib/args.mjs
+- Pattern in tests/args.test.mjs
+
+---
+id: codex-codewhale-cc-instinct-function-naming
+trigger: "When defining functions"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Function Naming
+
+## Action
+
+Name functions using camelCase
+
+## Evidence
+
+- Pattern inferred from TypeScript conventions and file examples
+
+---
+id: codex-codewhale-cc-instinct-class-naming
+trigger: "When defining classes"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Class Naming
+
+## Action
+
+Name classes using PascalCase
+
+## Evidence
+
+- Pattern inferred from TypeScript conventions
+
+---
+id: codex-codewhale-cc-instinct-constant-naming
+trigger: "When defining constants"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Constant Naming
+
+## Action
+
+Name constants using SCREAMING_SNAKE_CASE
+
+## Evidence
+
+- Pattern inferred from TypeScript conventions
+
+---
+id: codex-codewhale-cc-instinct-import-style
+trigger: "When importing modules"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Import Style
+
+## Action
+
+Use a mixed import style as appropriate (default and named imports)
+
+## Evidence
+
+- Pattern in plugins/codexhale/scripts/lib/*.mjs
+
+---
+id: codex-codewhale-cc-instinct-export-style
+trigger: "When exporting modules or functions"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Pattern in plugins/codexhale/scripts/lib/*.mjs
+
+---
+id: codex-codewhale-cc-instinct-test-file-location
+trigger: "When adding or updating tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Test File Location
+
+## Action
+
+Place test files in the separate 'tests' directory
+
+## Evidence
+
+- Pattern in tests/args.test.mjs
+- Pattern in tests/config.test.mjs
+
+---
+id: codex-codewhale-cc-instinct-test-file-naming
+trigger: "When naming test files"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Test File Naming
+
+## Action
+
+Use the pattern '*.test.ts' for test files
+
+## Evidence
+
+- Pattern in tests/args.test.mjs
+- Pattern in tests/config.test.mjs
+
+---
+id: codex-codewhale-cc-instinct-unit-tests
+trigger: "When writing tests for new features"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Unit Tests
+
+## Action
+
+Write unit tests for each new module or feature
+
+## Evidence
+
+- Workflow 'add-new-library-module-with-tests'
+- Pattern in tests/*.test.mjs
+
+---
+id: codex-codewhale-cc-instinct-git-commit-format
+trigger: "When making a git commit"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Git Commit Format
+
+## Action
+
+Use conventional commits with prefixes: feat, fix, docs, chore
+
+## Evidence
+
+- Seen in commit 'feat(args): add argv parser for companion subcommands'
+- Seen in commit 'fix(setup): check allow_shell via 'codewhale config get' not doctor JSON'
+
+---
+id: codex-codewhale-cc-instinct-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Commit Length
+
+## Action
+
+Keep commit messages concise, around 57 characters on average
+
+## Evidence
+
+- Average commit length: 57
+- Examples in commit history
+
+---
+id: codex-codewhale-cc-instinct-add-lib-module
+trigger: "When adding new core functionality to the plugin"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Add Lib Module
+
+## Action
+
+Create or update a file in plugins/codexhale/scripts/lib/*.mjs and a corresponding test file in tests/*.test.mjs
+
+## Evidence
+
+- Workflow 'add-new-library-module-with-tests'
+- Files: plugins/codexhale/scripts/lib/*.mjs, tests/*.test.mjs
+
+---
+id: codex-codewhale-cc-instinct-update-manifest
+trigger: "When making the plugin installable or fixing schema errors in the manifest"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Update Manifest
+
+## Action
+
+Create or update plugins/codexhale/.claude-plugin/plugin.json with correct schema fields
+
+## Evidence
+
+- Workflow 'update-or-fix-plugin-manifest'
+- File: plugins/codexhale/.claude-plugin/plugin.json
+
+---
+id: codex-codewhale-cc-instinct-update-install-docs
+trigger: "When documenting or clarifying installation steps or fixing documentation errors"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: Owen0225/codex-codewhale-cc
+---
+
+# Codex Codewhale Cc Instinct Update Install Docs
+
+## Action
+
+Create or update docs/INSTALL.md with new instructions or corrections
+
+## Evidence
+
+- Workflow 'update-installation-documentation'
+- File: docs/INSTALL.md
+
