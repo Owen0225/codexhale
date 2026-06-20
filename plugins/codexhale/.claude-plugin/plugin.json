@@ -1,0 +1,8 @@
+{
+  "name": "codexhale",
+  "version": "0.1.0",
+  "description": "Dual-model (CodeWhale + Codex) code review and CodeWhale task delegation for Claude Code.",
+  "author": { "name": "codexhale" },
+  "license": "MIT",
+  "homepage": "https://github.com/Hmbown/CodeWhale"
+}

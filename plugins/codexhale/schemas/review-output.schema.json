@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodexhaleReviewOutput",
+  "type": "object",
+  "required": ["issues"],
+  "properties": {
+    "summary": { "type": "string" },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "category", "severity", "description"],
+        "properties": {
+          "file": { "type": "string" },
+          "line_range": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 },
+          "category": { "type": "string", "enum": ["bug", "security", "performance", "design", "correctness", "maintainability", "other"] },
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low", "info"] },
+          "description": { "type": "string" }
+        }
+      }
+    }
+  }
+}
