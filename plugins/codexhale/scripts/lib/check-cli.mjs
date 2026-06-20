@@ -8,12 +8,3 @@ export function checkCli(name) {
     return { present: false, version: null };
   }
 }
-
-export function parseDoctor(docJson) {
-  try {
-    const doc = JSON.parse(docJson);
-    return { allow_shell: Boolean(doc.allow_shell), version: doc.version ?? null };
-  } catch {
-    return { allow_shell: false, version: null };
-  }
-}

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { extractJsonObject } from "./extract-json.mjs";
 
 // codex exec review --json --sandbox read-only [--base <b> | --uncommitted] <focus>
 export function buildReviewArgv({ base, focus }) {
@@ -23,9 +24,7 @@ export function parseReviewOutput(stdout) {
     else if (typeof obj.message === "string") lastMessage = obj.message;
   }
   if (!lastMessage) return null;
-  const match = lastMessage.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try { return JSON.parse(match[0]); } catch { return null; }
+  return extractJsonObject(lastMessage);
 }
 
 export function runCodex(argv, { cwd } = {}) {

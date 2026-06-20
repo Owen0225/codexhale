@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { extractJsonObject } from "./extract-json.mjs";
 
 export function buildReviewArgv({ rubric, instruction, maxTurns }) {
   return [
@@ -37,10 +38,8 @@ export function parseStreamJson(stdout) {
     }
   }
   if (!finalMessage) return null;
-  // Extract first JSON object from the message (it may have surrounding text)
-  const match = finalMessage.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-  try { return JSON.parse(match[0]); } catch { return null; }
+  // The agent message may have prose around the JSON object; extract it robustly.
+  return extractJsonObject(finalMessage);
 }
 
 export function runCodewhale(argv, { cwd } = {}) {

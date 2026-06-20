@@ -58,7 +58,7 @@ async function main() {
   process.exit(0);
 }
 
-function extractChangedFiles(transcript) {
+export function extractChangedFiles(transcript) {
   // Claude Code transcript shape varies; scan tool calls for file targets.
   const files = new Set();
   const walk = (node) => {
@@ -74,7 +74,7 @@ function extractChangedFiles(transcript) {
   return [...files];
 }
 
-function extractClaim(transcript) {
+export function extractClaim(transcript) {
   // Best-effort: last assistant text message.
   const texts = [];
   const walk = (node) => {
@@ -88,4 +88,7 @@ function extractClaim(transcript) {
   return (texts[texts.length - 1] || "").slice(0, 500);
 }
 
-main().catch(() => process.exit(0)); // always fail-open
+// Run only when executed directly as a hook, not when imported (e.g. by tests).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(() => process.exit(0)); // always fail-open
+}

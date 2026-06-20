@@ -15,18 +15,13 @@ export function parseArgs(argv) {
     const tok = rest[i];
     if (tok === "--enable-review-gate") { out.reviewGate = "enable"; i += 1; continue; }
     if (tok === "--disable-review-gate") { out.reviewGate = "disable"; i += 1; continue; }
-    if (tok === "--base") { out.base = rest[i + 1]; i += 2; continue; }
-    if (tok === "--scope") { out.scope = rest[i + 1]; i += 2; continue; }
-    if (tok === "--model") { out.model = rest[i + 1]; i += 2; continue; }
+    if (tok === "--base") { const v = takeValue(rest, i); out.base = v.value; i += v.consumed; continue; }
+    if (tok === "--scope") { const v = takeValue(rest, i); out.scope = v.value; i += v.consumed; continue; }
+    if (tok === "--model") { const v = takeValue(rest, i); out.model = v.value; i += v.consumed; continue; }
     if (tok === "--resume") {
-      const next = rest[i + 1];
-      if (next === undefined || String(next).startsWith("--")) {
-        out.resume = "continue";
-        i += 1;
-      } else {
-        out.resume = next;
-        i += 2;
-      }
+      const v = takeValue(rest, i);
+      out.resume = v.value ?? "continue"; // bare --resume (or followed by a flag) => continue most recent
+      i += v.consumed;
       continue;
     }
     if (BOOL_FLAGS.has(tok)) { out[flagKey(tok)] = true; i += 1; continue; }
@@ -43,4 +38,11 @@ export function parseArgs(argv) {
 
 function flagKey(flag) {
   return flag.replace(/^--/, "").replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// Consume the next token as a flag value, unless it is missing or is itself a flag.
+function takeValue(rest, i) {
+  const next = rest[i + 1];
+  if (next === undefined || String(next).startsWith("--")) return { value: null, consumed: 1 };
+  return { value: next, consumed: 2 };
 }

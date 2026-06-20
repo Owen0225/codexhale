@@ -17,6 +17,13 @@ test("parseStreamJson returns null when no final message", () => {
   assert.equal(parseStreamJson(lines.join("\n")), null);
 });
 
+test("parseStreamJson recovers findings when the final message wraps JSON in prose", () => {
+  const lines = [
+    JSON.stringify({ type: "turn_completed", final_message: 'Here you go: {"issues":[{"file":"a.rs"}]} (done)' }),
+  ];
+  assert.deepEqual(parseStreamJson(lines.join("\n")), { issues: [{ file: "a.rs" }] });
+});
+
 test("buildReviewArgv includes read-only disallowed-tools and stable system prompt", () => {
   const argv = buildReviewArgv({
     rubric: "RUBRIC_TEXT",
