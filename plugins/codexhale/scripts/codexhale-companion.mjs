@@ -174,8 +174,9 @@ function runSetup(opts) {
   const report = { codewhale: checkCli("codewhale"), codex: checkCli("codex") };
   let allowShell = "unknown";
   try {
-    const doc = execSync("codewhale doctor --json", { encoding: "utf8" });
-    allowShell = parseDoctor(doc).allow_shell ? "on" : "off";
+    // doctor --json has no allow_shell field; read it directly from config.
+    const raw = execSync("codewhale config get allow_shell", { encoding: "utf8" }).trim();
+    allowShell = raw === "true" ? "on" : raw === "false" ? "off" : "unknown";
   } catch {}
   process.stdout.write(`codewhale: ${report.codewhale.present ? `v${report.codewhale.version}` : "MISSING (npm i -g codewhale)"}\n`);
   process.stdout.write(`codex:     ${report.codex.present ? `v${report.codex.version}` : "MISSING (npm i -g @openai/codex; codex login)"}\n`);
