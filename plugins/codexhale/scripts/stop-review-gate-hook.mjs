@@ -2,11 +2,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { fileURLToPath } from "node:url";
 import { readConfig } from "./lib/config.mjs";
 import { buildReviewArgv, runCodewhale, parseStreamJson } from "./lib/codewhale.mjs";
 
 const HOME = os.homedir();
-const PLUGIN_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, "")), "..");
+const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 async function main() {
   // Claude Code Stop hooks read JSON from stdin.

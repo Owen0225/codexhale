@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "./lib/args.mjs";
 import { readConfig, writeConfig } from "./lib/config.mjs";
 import { createJob, updateJob, readJob, listJobsForRepo } from "./lib/jobs.mjs";
@@ -10,10 +11,10 @@ import { buildReviewInstruction } from "./lib/review-prompt.mjs";
 import { buildReviewArgv as cwReviewArgv, buildRescueArgv, runCodewhale, parseStreamJson } from "./lib/codewhale.mjs";
 import { buildReviewArgv as codexReviewArgv, runCodex, parseReviewOutput } from "./lib/codex.mjs";
 import { mergeFindings, renderMergedReport } from "./lib/merge.mjs";
-import { checkCli, parseDoctor } from "./lib/check-cli.mjs";
+import { checkCli } from "./lib/check-cli.mjs";
 
 const HOME = os.homedir();
-const PLUGIN_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, "")), "..");
+const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function readPrompt(name) {
   return fs.readFileSync(path.join(PLUGIN_ROOT, "prompts", name), "utf8");

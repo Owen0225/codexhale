@@ -53,7 +53,14 @@ export function listJobsForRepo(home, repo) {
   if (!fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .filter(f => f.endsWith(".json"))
-    .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")))
-    .filter(j => j.repo === repo)
-    .sort((a, b) => (b.started_at || "").localeCompare(a.started_at || ""));
+    .map(f => {
+      const p = path.join(dir, f);
+      return { job: JSON.parse(fs.readFileSync(p, "utf8")), mtime: fs.statSync(p).mtimeMs };
+    })
+    .filter(({ job }) => job.repo === repo)
+    .sort((a, b) => {
+      const d = (b.job.started_at || "").localeCompare(a.job.started_at || "");
+      return d !== 0 ? d : b.mtime - a.mtime;
+    })
+    .map(({ job }) => job);
 }
