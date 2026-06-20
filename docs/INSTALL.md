@@ -41,25 +41,51 @@ codewhale auth set --provider deepseek
 
 ### 1.2 开启 allow_shell（review 必需）
 
-`codexhale:review` 让 CodeWhale 自己跑 `git status` / `git diff`，需要 shell 工具。编辑 `~/.codewhale/config.toml`，加入或确认：
+`codexhale:review` 让 CodeWhale 自己跑 `git status` / `git diff`，需要 shell 工具对模型可见，这由 `allow_shell` 控制。
+
+**推荐方式**——用 codewhale 自带命令：
+
+```bash
+codewhale config set allow_shell true
+```
+
+⚠️ **已知坑**：`codewhale config set` 会把值写成**字符串** `"true"`（带引号）而非布尔 `true`，这会导致 `config.toml` TOML 解析失败、所有 codewhale 命令报 `invalid type: string "true", expected a boolean`。设完之后**必须手动修正**：
+
+打开 `~/.codewhale/config.toml`（Windows: `C:\Users\<你>\.codewhale\config.toml`），找到顶层（任何 `[section]` 之前）的：
+
+```toml
+allow_shell = "true"
+```
+
+改成（去掉引号）：
 
 ```toml
 allow_shell = true
 ```
 
+**或者跳过 `config set`，直接手编文件**——在文件最顶部（`api_key = ...` 同级、所有 `[xxx]` section 之前）加一行：
+
+```toml
+allow_shell = true
+```
+
+注意：`allow_shell = true` 必须是顶层键，不能放进 `[http_headers]` 等 section 内，否则失效。
+
 ### 1.3 验证
 
 ```bash
-codewhale doctor
+codewhale config get allow_shell
 ```
 
-应显示 `config_present: true`、`api_key.source: env` 或 `config`、`sandbox` 状态等，无报错。
+应输出 `true`（无引号）。
 
 ```bash
 codewhale doctor --json
 ```
 
-JSON 输出里 `allow_shell` 应为 `true`。`/codexhale:setup` 会自动检查这一项。
+应能正常输出 JSON（不再报 TOML 解析错误）。注意：`doctor --json` 的 schema 里**没有** `allow_shell` 字段，所以别在那里找它——用 `config get` 查。
+
+`/codexhale:setup` 会自动用 `codewhale config get allow_shell` 检查这一项并报 `allow_shell: on/off`。
 
 ---
 
