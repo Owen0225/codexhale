@@ -10,6 +10,7 @@ import { buildReviewInstruction } from "./lib/review-prompt.mjs";
 import { buildReviewArgv as cwReviewArgv, buildRescueArgv, runCodewhale, parseStreamJson } from "./lib/codewhale.mjs";
 import { buildReviewArgv as codexReviewArgv, runCodex, parseReviewOutput } from "./lib/codex.mjs";
 import { mergeFindings, renderMergedReport } from "./lib/merge.mjs";
+import { checkCli, parseDoctor } from "./lib/check-cli.mjs";
 
 const HOME = os.homedir();
 const PLUGIN_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, "")), "..");
@@ -174,7 +175,7 @@ function runSetup(opts) {
   let allowShell = "unknown";
   try {
     const doc = execSync("codewhale doctor --json", { encoding: "utf8" });
-    allowShell = JSON.parse(doc).allow_shell ? "on" : "off";
+    allowShell = parseDoctor(doc).allow_shell ? "on" : "off";
   } catch {}
   process.stdout.write(`codewhale: ${report.codewhale.present ? `v${report.codewhale.version}` : "MISSING (npm i -g codewhale)"}\n`);
   process.stdout.write(`codex:     ${report.codex.present ? `v${report.codex.version}` : "MISSING (npm i -g @openai/codex; codex login)"}\n`);
@@ -185,13 +186,5 @@ function runSetup(opts) {
   if (report.codewhale.present && !report.codex.present) process.stdout.write("\nreview will degrade to single-model (codewhale only) until codex is installed.\n");
 }
 
-function checkCli(name) {
-  try {
-    const v = execSync(`${name} --version`, { encoding: "utf8" }).trim();
-    return { present: true, version: v.replace(/^[^\d]*/, "") };
-  } catch {
-    return { present: false, version: null };
-  }
-}
 
 main().catch(e => { process.stderr.write(`${e.stack || e}\n`); process.exit(1); });
