@@ -1,27 +1,34 @@
 import { spawn } from "node:child_process";
 import { extractJsonObject } from "./extract-json.mjs";
+import { buildReviewInstruction } from "./review-prompt.mjs";
 
-// codex exec review --json --sandbox read-only [--base <b> | --uncommitted] <focus>
+// Use plain `codex exec` (NOT `exec review`): exec review emits PROSE review
+// comments, but plain exec honors our JSON-output instruction (so codex returns the
+// same review-output schema as codewhale). `codex exec` accepts --sandbox read-only;
+// `exec review` rejects it. Scope (base vs uncommitted) is carried in the instruction.
 export function buildReviewArgv({ base, focus }) {
-  const argv = ["exec", "review", "--json", "--sandbox", "read-only"];
-  if (base) argv.push("--base", base);
-  else argv.push("--uncommitted");
-  if (focus) argv.push(focus);
-  return argv;
+  const instruction = buildReviewInstruction({ base, focus, adversarial: false });
+  return ["exec", "--json", "--sandbox", "read-only", instruction];
 }
 
-// Parse JSONL. Codex --json emits events; the final review message is carried in
-// a `last_message` field on the terminal event. Extract the first JSON object.
+// Parse codex --json JSONL events. codex 0.14x carries the final agent message in
+// {"type":"item.completed","item":{"type":"agent_message","text":"..."}}. Older
+// schemas used last_message/message. Tolerate leading ANSI/OSC escapes per line.
 export function parseReviewOutput(stdout) {
   const lines = stdout.split("\n");
   let lastMessage = null;
   for (const line of lines) {
-    const t = line.trim();
-    if (!t) continue;
+    const i = line.indexOf("{");
+    if (i < 0) continue;
     let obj;
-    try { obj = JSON.parse(t); } catch { continue; }
-    if (typeof obj.last_message === "string") lastMessage = obj.last_message;
-    else if (typeof obj.message === "string") lastMessage = obj.message;
+    try { obj = JSON.parse(line.slice(i)); } catch { continue; }
+    if (obj.type === "item.completed" && obj.item?.type === "agent_message" && typeof obj.item.text === "string") {
+      lastMessage = obj.item.text;
+    } else if (typeof obj.last_message === "string") {
+      lastMessage = obj.last_message;
+    } else if (typeof obj.message === "string") {
+      lastMessage = obj.message;
+    }
   }
   if (!lastMessage) return null;
   return extractJsonObject(lastMessage);

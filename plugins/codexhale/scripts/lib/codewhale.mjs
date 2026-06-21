@@ -26,17 +26,21 @@ export function buildRescueArgv({ task, model, resume }) {
 export function parseStreamJson(stdout) {
   const lines = stdout.split("\n");
   let finalMessage = null;
+  const contentChunks = [];
   for (const line of lines) {
-    const t = line.trim();
-    if (!t) continue;
+    const i = line.indexOf("{"); // tolerate leading ANSI/OSC terminal escapes
+    if (i < 0) continue;
     let obj;
-    try { obj = JSON.parse(t); } catch { continue; }
+    try { obj = JSON.parse(line.slice(i)); } catch { continue; }
     if (obj.type === "turn_completed" && typeof obj.final_message === "string") {
       finalMessage = obj.final_message;
     } else if (obj.type === "agent_message" && typeof obj.message === "string") {
       finalMessage = obj.message; // last agent_message wins as fallback
+    } else if (obj.type === "content" && typeof obj.content === "string") {
+      contentChunks.push(obj.content); // codewhale streams the final message as content chunks
     }
   }
+  if (!finalMessage && contentChunks.length) finalMessage = contentChunks.join("");
   if (!finalMessage) return null;
   // The agent message may have prose around the JSON object; extract it robustly.
   return extractJsonObject(finalMessage);

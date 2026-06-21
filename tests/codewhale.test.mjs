@@ -24,6 +24,22 @@ test("parseStreamJson recovers findings when the final message wraps JSON in pro
   assert.deepEqual(parseStreamJson(lines.join("\n")), { issues: [{ file: "a.rs" }] });
 });
 
+test("parseStreamJson concatenates codewhale content chunks and extracts JSON", () => {
+  const lines = [
+    JSON.stringify({ type: "tool_use", name: "exec_shell" }),
+    JSON.stringify({ type: "content", content: 'Review done. {"issues":[' }),
+    JSON.stringify({ type: "content", content: '{"file":"a.rs"}]}' }),
+    JSON.stringify({ type: "done" }),
+  ];
+  assert.deepEqual(parseStreamJson(lines.join("\n")), { issues: [{ file: "a.rs" }] });
+});
+
+test("parseStreamJson strips leading ANSI/OSC noise before the JSON event", () => {
+  const ansi = "]0;CodeWhale";
+  const lines = [ansi + JSON.stringify({ type: "content", content: '{"issues":[]}' })];
+  assert.deepEqual(parseStreamJson(lines.join("\n")), { issues: [] });
+});
+
 test("buildReviewArgv includes read-only disallowed-tools and stable system prompt", () => {
   const argv = buildReviewArgv({
     rubric: "RUBRIC_TEXT",

@@ -2,36 +2,47 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildReviewArgv, parseReviewOutput } from "../plugins/codexhale/scripts/lib/codex.mjs";
 
-test("buildReviewArgv uses exec review subcommand with json + read-only sandbox", () => {
+test("buildReviewArgv uses plain exec (not exec review) with read-only sandbox + json", () => {
   const argv = buildReviewArgv({ base: "main", focus: "look for races" });
   assert.equal(argv[0], "exec");
-  assert.equal(argv[1], "review");
+  assert.ok(!argv.includes("review")); // exec review emits prose; plain exec honors our JSON instruction
   assert.ok(argv.includes("--json"));
   assert.ok(argv.includes("--sandbox"));
   assert.ok(argv.includes("read-only"));
-  assert.ok(argv.includes("--base"));
-  assert.ok(argv.includes("main"));
-  assert.ok(argv[argv.length - 1] === "look for races");
+  // scope + focus are carried in the instruction (last arg) since plain exec has no --base
+  const instruction = argv[argv.length - 1];
+  assert.match(instruction, /git diff main\.\.\.HEAD/);
+  assert.match(instruction, /look for races$/);
 });
 
-test("buildReviewArgv uncommitted when no base", () => {
+test("buildReviewArgv uncommitted instruction when no base", () => {
   const argv = buildReviewArgv({ base: null, focus: null });
-  assert.ok(argv.includes("--uncommitted"));
+  assert.match(argv[argv.length - 1], /uncommitted/i);
 });
 
 test("buildReviewArgv stable: identical inputs byte-identical", () => {
-  const a = buildReviewArgv({ base: "main", focus: "x" });
-  const b = buildReviewArgv({ base: "main", focus: "x" });
-  assert.deepEqual(a, b);
+  assert.deepEqual(buildReviewArgv({ base: "main", focus: "x" }), buildReviewArgv({ base: "main", focus: "x" }));
 });
 
-test("parseReviewOutput extracts JSON from last-message jsonl event", () => {
+test("parseReviewOutput extracts JSON from codex 0.14x item.completed/agent_message/text", () => {
   const lines = [
-    JSON.stringify({ type: "message", content: "thinking..." }),
-    JSON.stringify({ type: "completed", last_message: '{\n  "issues": []\n}' }),
+    JSON.stringify({ type: "thread.started" }),
+    JSON.stringify({ type: "item.completed", item: { id: "i1", type: "reasoning", text: "thinking" } }),
+    JSON.stringify({ type: "item.completed", item: { id: "i2", type: "agent_message", text: 'here:\n{"issues":[]}' } }),
+    JSON.stringify({ type: "turn.completed" }),
   ];
-  const out = parseReviewOutput(lines.join("\n"));
-  assert.deepEqual(out, { issues: [] });
+  assert.deepEqual(parseReviewOutput(lines.join("\n")), { issues: [] });
+});
+
+test("parseReviewOutput strips ANSI/prefix before the JSON event", () => {
+  const ansi = "]0;codex";
+  const lines = [ansi + JSON.stringify({ type: "item.completed", item: { type: "agent_message", text: '{"issues":[{"file":"a"}]}' } })];
+  assert.deepEqual(parseReviewOutput(lines.join("\n")), { issues: [{ file: "a" }] });
+});
+
+test("parseReviewOutput backward-compat: older last_message schema still works", () => {
+  const lines = [JSON.stringify({ type: "completed", last_message: '{"issues":[]}' })];
+  assert.deepEqual(parseReviewOutput(lines.join("\n")), { issues: [] });
 });
 
 test("parseReviewOutput returns null on no parseable message", () => {
