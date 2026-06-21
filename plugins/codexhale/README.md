@@ -20,6 +20,7 @@ Dual-model adversarial code review and cheap task delegation. CodeWhale (DeepSee
 - `/codexhale:rescue <task>` — delegate implementation/debugging to CodeWhale (`--model fin` for cheap tier, `--resume` to continue)
 - `/codexhale:status` / `result` / `cancel` — manage background jobs
 - `/codexhale:setup --enable-review-gate` — gate Claude's turn completion behind a CodeWhale review (default off)
+- `/codexhale:spec <task>` — runs the Pilot spec workflow whose **verify phase uses a multi-round debate review** (CodeWhale + Codex review read-only, cross-examine each other's findings to consensus). One round per verify pass; the existing spec verify->implement->re-verify loop (capped at 3) re-runs it until no agreed critical/high findings remain. Replaces the one-shot Codex companion; the inline `/code-review` is untouched. Namespaced fork of the spec skills — does **not** touch the global `/spec`; requires Pilot Shell.
 
 ## When to use which model
 - **Review / adversarial** → always codexhale (dual-model, highest blind-spot coverage)

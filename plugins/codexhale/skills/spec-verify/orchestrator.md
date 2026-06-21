@@ -17,7 +17,7 @@ user-invocable: false
 ## ⛔ KEY CONSTRAINTS
 
 <!-- CC-ONLY -->
-1. **Run code review when enabled** — Step 3 runs the built-in `/code-review` skill at the configured effort (`$PILOT_CODE_REVIEW_EFFORT`, default `xhigh`; resolved and allow-listed in Step 3) when `PILOT_CHANGES_REVIEW_ENABLED` is not `"false"` (read in Step 0). It runs inline in the main session AFTER the Step 2 automated checks; the optional Codex companion (Step 1) is the only early background launch. To disable, use Console Settings → Reviewers → Changes Review toggle; the effort is set in Console Settings → Spec Workflow → Code Review Effort.
+1. **Run code review when enabled** — Step 3 runs the built-in `/code-review` skill at the configured effort (`$PILOT_CODE_REVIEW_EFFORT`, default `xhigh`; resolved and allow-listed in Step 3) when `PILOT_CHANGES_REVIEW_ENABLED` is not `"false"` (read in Step 0). It runs inline in the main session AFTER the Step 2 automated checks; the optional codexhale debate review (Step 1) is the only early background launch. To disable, use Console Settings → Reviewers → Changes Review toggle; the effort is set in Console Settings → Spec Workflow → Code Review Effort.
 2. **NEVER launch reviewer sub-agents during verification** — Do NOT launch `spec-review` or `changes-review` via the Agent tool; on Claude Code the review mechanism is the inline `/code-review` skill. Do NOT read or reference `findings-spec-review-*.json` or `findings-changes-review-*.json` files — they are stale artifacts (planning phase / older Pilot versions). If you encounter one, **ignore it completely**.
 <!-- /CC-ONLY -->
 <!-- CODEX-START

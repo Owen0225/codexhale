@@ -17,6 +17,7 @@
 | `/codexhale:result` | 读取合并后的审查报告或 rescue 输出 |
 | `/codexhale:cancel` | 取消运行中的后台 job |
 | `/codexhale:setup` | 就绪检查 + 配置 Stop 审查门 |
+| `/codexhale:spec` | 把 Pilot spec 工作流验证阶段的评审换成 codexhale 多轮辩论共识（替换一次性 Codex 副评）；需要 Pilot Shell |
 
 ---
 
@@ -25,6 +26,7 @@
 | 场景 | 用法 |
 |------|------|
 | 审查 / 质疑设计 | `/codexhale:review` 或 `:adversarial-review`（双模型，覆盖最彻底） |
+| 中大型功能 / 修复，要带辩论式多轮共识评审 | `/codexhale:spec <任务>`（完整 spec 流程，验证阶段用 debate-review；需 Pilot Shell） |
 | 批量实现 / 重构 / 补测试 / 修 bug | `/codexhale:rescue --background`（DeepSeek 便宜，量大优势大） |
 | 微小单行改动 | 留给 Claude（启动 CodeWhale 进程的开销比收益大） |
 | 规划 / 编排 / 最终交付 | Claude |
@@ -225,6 +227,25 @@ codex exec resume <session-id>
 
 ---
 
+## `/codexhale:spec` — 多轮共识评审接入 spec 工作流
+
+`/codexhale:spec <任务描述>` 跑完整的 spec 驱动流程（规划 → 实现 → 验证），但**验证阶段的评审换成 codexhale 的多轮辩论共识评审**，替换 Pilot 原来那个一次性的 Codex 副评。内置 `/code-review` 主评保持不变。
+
+**一轮辩论评审做什么：**
+
+1. CodeWhale + Codex 各自只读评审本次改动
+2. 交叉质证：把对方的 findings 喂回去确认/反驳（只针对单模型报的 critical/high；双方都独立报的不可被推翻）
+3. 每条 finding 标状态：正常辩论是 `agreed`（双方都独立报）/ `disputed`（有争议）/ `refuted`（被有力反驳）；**一个模型缺席的降级模式下，所有 finding 标 `uncontested`**（没有第二意见）
+4. verdict：本轮无 `agreed` 的 critical/high → `clean`
+
+**多轮**复用 spec 现有的「验证 → 实现 → 重验证」外层循环（上限 3 轮）：某轮不 clean → 修复 → 重验证（重跑辩论），直到 clean 才交付。一个模型缺席时降级为单模型评审（标 `degraded`）。
+
+**它是命名空间 fork，不动全局：** `/codexhale:spec` 是 Pilot spec 技能链在插件里的副本（`plugins/codexhale/skills/`），调用时带 `codexhale:` 前缀，**不修改你全局的 `/spec`**，Pilot 升级也不会冲突。只有 `spec-verify` / `spec-bugfix-verify` 两个技能改了行为（接 debate-review），其余 4 个只改了跨技能调用的命名空间。`scripts/check-fork-drift.sh` 可检查与上游的偏移。
+
+> **前提：** 该命令 fork 的是 Pilot Shell 的 spec 技能，依赖 Pilot 环境（`PILOT_*` 变量、`pilot` CLI）。没有 Pilot 用不了它；但 `/codexhale:review`、`/codexhale:rescue` 等命令不依赖 Pilot，照常可用。
+
+---
+
 ## 缓存原理
 
 review rubric 存在 `prompts/*.md`，通过 `codewhale --append-system-prompt` 传入。每次调用字节完全相同 → DeepSeek 稳定缓存前缀。动态部分（diff、focus 文本）在最后 → **只对实际改动付全价**。
@@ -247,6 +268,9 @@ review rubric 存在 `prompts/*.md`，通过 `codewhale --append-system-prompt` 
 
 **review 只有 `[cw]`，没有 `[codex]`**  
 → codex 未装或未登录。`codex --version` 检查，`!codex login` 重新登录。companion 用 `Promise.allSettled`，codex 挂了只降级不崩溃。
+
+**review / spec 报告总是降级（`clean - no model produced output` 或 `clean - degraded single-model review …`）**  
+→ 你的 `codewhale` / `codex` 版本输出格式与解析器不匹配。两个模型都解析失败显示前者，只有一个失败显示后者。本插件已适配 `codewhale 0.8.62`（流式 `content` 块）与 `codex 0.140`（`item.completed` → `agent_message` → `text`）；版本差异过大时升级 CLI 或提 issue。
 
 **`codewhale: command not found`（Windows）**  
 → npm 全局 bin 未在 PATH。`npm config get prefix` 找到 bin 目录加入系统 PATH，重启终端。
@@ -289,5 +313,6 @@ rm -rf ~/.codexhale-cc
     ├── <id>.json        # job manifest（kind / status / sub_jobs / session ids）
     ├── <id>.codewhale.stdout.log
     ├── <id>.codex.stdout.log
-    └── <id>.merged.md   # 合并后的双模型审查报告
+    ├── <id>.merged.md   # /codexhale:review 的合并报告
+    └── <id>.debate.md   # /codexhale:spec 辩论评审报告（含 verdict + 状态标签）
 ```
