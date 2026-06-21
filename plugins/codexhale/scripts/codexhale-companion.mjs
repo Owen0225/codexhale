@@ -12,8 +12,12 @@ import { buildReviewArgv as cwReviewArgv, buildRescueArgv, runCodewhale, parseSt
 import { buildReviewArgv as codexReviewArgv, runCodex, parseReviewOutput } from "./lib/codex.mjs";
 import { mergeFindings, renderMergedReport } from "./lib/merge.mjs";
 import { checkCli } from "./lib/check-cli.mjs";
+import { addIds, tagFindings, computeVerdict } from "./lib/status-tag.mjs";
+import { runCodewhaleRebuttal, runCodexRebuttal } from "./lib/debate.mjs";
+import { renderDebateReport } from "./lib/debate-report.mjs";
 
 const HOME = os.homedir();
+const BLOCKING = new Set(["critical", "high"]);
 const PLUGIN_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function readPrompt(name) {
@@ -34,6 +38,8 @@ async function main() {
     case "review":
     case "adversarial-review":
       return runReview(opts);
+    case "debate-review":
+      return runDebateReview(opts);
     case "rescue":
       return runRescue(opts);
     case "status":
@@ -189,4 +195,79 @@ function runSetup(opts) {
 }
 
 
-main().catch(e => { process.stderr.write(`${e.stack || e}\n`); process.exit(1); });
+// One debate round: parallel read-only reviews -> degraded check -> merge+ids
+// -> early-exit if no critical/high -> rebut only single-model critical/high
+// (agreed findings are never downgraded) -> tag -> verdict -> report.
+// `deps` is a test seam: {runCw, runCx, home}. Defaults to real spawn + HOME.
+export async function runDebateReview(opts, deps = {}) {
+  const cwd = process.cwd();
+  const home = deps.home ?? HOME;
+  const runCw = deps.runCw ?? ((argv) => runCodewhale(argv, { cwd }));
+  const runCx = deps.runCx ?? ((argv) => runCodex(argv, { cwd }));
+  const rebuttalRubric = readPrompt("rebuttal-codewhale.md");
+  const rubric = readPrompt("review.md");
+
+  const focus = opts.positional.join(" ") || null;
+  const reviewInstruction = buildReviewInstruction({ base: opts.base, focus, adversarial: false });
+
+  const [cwR, cxR] = await Promise.allSettled([
+    runCw(cwReviewArgv({ rubric, instruction: reviewInstruction, maxTurns: 50 })),
+    runCx(codexReviewArgv({ base: opts.base, focus })),
+  ]);
+  const cwRes = cwR.status === "fulfilled" ? cwR.value : { code: -1, stdout: "", stderr: String(cwR.reason) };
+  const cxRes = cxR.status === "fulfilled" ? cxR.value : { code: -1, stdout: "", stderr: String(cxR.reason) };
+  const cwOut = cwRes.code === 0 ? parseStreamJson(cwRes.stdout) : null;
+  const cxOut = cxRes.code === 0 ? parseReviewOutput(cxRes.stdout) : null;
+
+  const writeOut = (report) => { if (!deps.runCw) process.stdout.write(report); };
+
+  // Degraded: one (or zero) usable models -> single-model, findings uncontested.
+  const present = [cwOut ? "codewhale" : null, cxOut ? "codex" : null].filter(Boolean);
+  if (present.length <= 1) {
+    const only = (cwOut ?? cxOut)?.issues ?? [];
+    const findings = addIds(only).map(i => ({ ...i, found_by: present, status: "uncontested" }));
+    const blocking = findings.filter(i => BLOCKING.has(i.severity)).length;
+    const verdict = {
+      clean: blocking === 0, degraded: true, agreedBlocking: blocking,
+      reason: present.length === 0 ? "no model produced output" : `degraded single-model review (${present[0] || "none"})`,
+    };
+    const report = renderDebateReport(findings, verdict);
+    finishDebateJob(home, { cwRes, cxRes, report, degraded: true });
+    writeOut(report);
+    return { verdict, findings, report };
+  }
+
+  const merged = addIds(mergeFindings(cwOut ?? { issues: [] }, cxOut ?? { issues: [] }).issues);
+
+  let cwReb = [], cxReb = [];
+  if (merged.some(i => BLOCKING.has(i.severity))) {
+    const codexDisputed = merged.filter(i => i.found_by.length === 1 && i.found_by[0] === "codex" && BLOCKING.has(i.severity));
+    const cwDisputed = merged.filter(i => i.found_by.length === 1 && i.found_by[0] === "codewhale" && BLOCKING.has(i.severity));
+    [cwReb, cxReb] = await Promise.all([
+      runCodewhaleRebuttal(rebuttalRubric, codexDisputed, opts.base, { cwd, runner: runCw }),
+      runCodexRebuttal(cwDisputed, opts.base, { cwd, runner: runCx }),
+    ]);
+  }
+
+  const tagged = tagFindings(merged, cwReb, cxReb);
+  const verdict = computeVerdict(tagged);
+  const report = renderDebateReport(tagged, verdict);
+  finishDebateJob(home, { cwRes, cxRes, report, degraded: false });
+  writeOut(report);
+  return { verdict, findings: tagged, report };
+}
+
+function finishDebateJob(home, { cwRes, cxRes, report, degraded }) {
+  const job = createJob(home, { kind: "debate-review", repo: repoKey(), cc_task_id: null });
+  const dir = path.join(home, ".codexhale-cc", "jobs");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, `${job.id}.codewhale.stdout.log`), cwRes.stdout + "\n---STDERR---\n" + cwRes.stderr, "utf8");
+  fs.writeFileSync(path.join(dir, `${job.id}.codex.stdout.log`), cxRes.stdout + "\n---STDERR---\n" + cxRes.stderr, "utf8");
+  fs.writeFileSync(path.join(dir, `${job.id}.debate.md`), report, "utf8");
+  updateJob(home, job.id, { status: "completed", exit_code: 0, degraded: !!degraded, debate_report_path: `${job.id}.debate.md` });
+}
+
+// Run only when executed directly as a CLI, not when imported (e.g. by tests).
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch(e => { process.stderr.write(`${e.stack || e}\n`); process.exit(1); });
+}

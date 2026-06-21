@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CodexhaleDebateRebuttal",
+  "type": "object",
+  "required": ["rebuttals"],
+  "properties": {
+    "rebuttals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "verdict", "reason"],
+        "properties": {
+          "finding_id": { "type": "string" },
+          "verdict": { "type": "string", "enum": ["agree", "refute"] },
+          "reason": { "type": "string" },
+          "evidence_file": { "type": "string" },
+          "evidence_line_range": { "type": "array", "items": { "type": "integer" }, "minItems": 2, "maxItems": 2 }
+        }
+      }
+    }
+  }
+}
